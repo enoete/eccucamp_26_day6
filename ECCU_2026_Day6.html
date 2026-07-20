@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Day 6 — Score & Voice | ECCU GenAI Camp 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0A1628;--navy2:#112240;--coral:#E8573A;--teal:#00C9B1;
+  --gold:#F0A500;--cream:#F5F0E8;--cream2:#EDE8DF;--white:#FFFFFF;
+  --gray:#8892A4;--light:#D1D9E6;--purple:#7B5EA7;--green:#2ECC71;
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'Space Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font-body);background:var(--navy);color:var(--cream)}
+
+/* ── SLIDE ENGINE ── */
+.deck{width:100vw;height:100vh;position:relative}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  padding:64px 80px;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.5s ease;
+}
+.slide.active{opacity:1;pointer-events:all}
+
+/* ── CONTROLS ── */
+.controls{
+  position:fixed;bottom:28px;right:36px;
+  display:flex;gap:12px;z-index:200;align-items:center;
+}
+.ctrl-btn{
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  color:var(--cream);font-family:var(--font-mono);font-size:12px;
+  padding:8px 18px;border-radius:6px;cursor:pointer;
+  transition:all 0.2s;
+}
+.ctrl-btn:hover{background:var(--teal);color:var(--navy);border-color:var(--teal)}
+.slide-counter{
+  font-family:var(--font-mono);font-size:11px;color:var(--gray);
+  letter-spacing:1px;
+}
+.session-indicator{
+  position:fixed;top:20px;right:36px;
+  font-family:var(--font-mono);font-size:10px;
+  color:var(--gray);letter-spacing:2px;text-transform:uppercase;
+  z-index:200;
+}
+.progress-bar{
+  position:fixed;bottom:0;left:0;height:3px;
+  background:var(--teal);transition:width 0.4s ease;z-index:200;
+}
+
+/* ── SLIDE BACKGROUNDS ── */
+.bg-navy{background:var(--navy)}
+.bg-navy2{background:var(--navy2)}
+.bg-teal{background:linear-gradient(135deg,rgba(0,201,177,0.12),rgba(0,201,177,0.03))}
+.bg-coral{background:linear-gradient(135deg,rgba(232,87,58,0.12),rgba(232,87,58,0.03))}
+.bg-gold{background:linear-gradient(135deg,rgba(240,165,0,0.12),rgba(240,165,0,0.03))}
+.bg-purple{background:linear-gradient(135deg,rgba(123,94,167,0.12),rgba(123,94,167,0.03))}
+.bg-dark{background:#060E1C}
+
+/* ── TYPOGRAPHY ── */
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--teal);text-transform:uppercase;margin-bottom:16px}
+.eyebrow.coral{color:var(--coral)}
+.eyebrow.gold{color:var(--gold)}
+.eyebrow.purple{color:var(--purple)}
+.slide-title{font-family:var(--font-display);font-size:clamp(52px,7vw,100px);line-height:0.9;color:var(--white);margin-bottom:24px}
+.slide-title .accent{color:var(--coral)}
+.slide-title .teal{color:var(--teal)}
+.slide-title .gold{color:var(--gold)}
+.slide-subtitle{font-family:var(--font-display);font-size:clamp(28px,4vw,52px);color:var(--gold);margin-bottom:32px;letter-spacing:1px}
+.body-text{font-size:clamp(14px,1.6vw,18px);line-height:1.8;color:var(--light);max-width:700px}
+.body-text strong{color:var(--teal)}
+.big-quote{
+  font-family:var(--font-display);font-size:clamp(28px,4vw,56px);
+  line-height:1.1;color:var(--white);max-width:800px;
+  border-left:4px solid var(--teal);padding-left:32px;
+}
+.big-quote.coral{border-left-color:var(--coral)}
+.big-quote.gold{border-left-color:var(--gold)}
+
+/* ── LAYOUT COMPONENTS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;width:100%;max-width:1000px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;width:100%;max-width:1100px}
+
+.info-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;padding:24px;
+}
+.info-card h3{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.info-card p,.info-card li{font-size:13px;color:var(--light);line-height:1.7}
+.info-card ul{list-style:none;padding:0}
+.info-card li{padding:4px 0 4px 14px;position:relative;border-bottom:1px solid rgba(255,255,255,0.04)}
+.info-card li::before{content:'▸';position:absolute;left:0;font-size:10px;top:6px}
+.info-card li:last-child{border-bottom:none}
+.info-card.teal-border{border-left:3px solid var(--teal)}
+.info-card.coral-border{border-left:3px solid var(--coral)}
+.info-card.gold-border{border-left:3px solid var(--gold)}
+.info-card h3.teal{color:var(--teal)}
+.info-card h3.coral{color:var(--coral)}
+.info-card h3.gold{color:var(--gold)}
+.info-card h3.purple{color:var(--purple)}
+
+/* ── TASK CARD ── */
+.task-card{
+  background:rgba(0,201,177,0.07);
+  border:1px solid rgba(0,201,177,0.25);
+  border-radius:12px;padding:28px 32px;
+  max-width:760px;width:100%;
+}
+.task-card.coral{background:rgba(232,87,58,0.07);border-color:rgba(232,87,58,0.25)}
+.task-card.gold{background:rgba(240,165,0,0.07);border-color:rgba(240,165,0,0.25)}
+.task-card h2{font-family:var(--font-display);font-size:28px;color:var(--teal);margin-bottom:16px}
+.task-card h2.coral{color:var(--coral)}
+.task-card h2.gold{color:var(--gold)}
+.task-card .timer{font-family:var(--font-mono);font-size:12px;color:var(--gray);margin-bottom:16px;letter-spacing:1px}
+.task-card ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
+.task-card li{
+  font-size:14px;color:var(--cream);line-height:1.6;
+  padding:10px 14px 10px 36px;position:relative;
+  background:rgba(255,255,255,0.03);border-radius:6px;
+}
+.task-card li::before{content:'☐';position:absolute;left:12px;color:var(--teal);font-size:14px}
+.task-card.coral li::before{color:var(--coral)}
+.task-card.gold li::before{color:var(--gold)}
+
+/* ── COMPARISON ── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;width:100%;max-width:900px;border-radius:10px;overflow:hidden}
+.compare-col{padding:24px 28px}
+.compare-col.left{background:rgba(232,87,58,0.08)}
+.compare-col.right{background:rgba(0,201,177,0.08)}
+.compare-col h3{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.compare-col.left h3{color:var(--coral)}
+.compare-col.right h3{color:var(--teal)}
+.compare-col ul{list-style:none;padding:0}
+.compare-col li{font-size:13px;color:var(--light);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.compare-col li:last-child{border-bottom:none}
+
+/* ── ROSTER TABLE ── */
+.roster{width:100%;max-width:700px;border-collapse:collapse}
+.roster th{text-align:left;padding:10px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);border-bottom:1px solid rgba(0,201,177,0.3)}
+.roster td{padding:12px 16px;font-size:13px;color:var(--light);border-bottom:1px solid rgba(255,255,255,0.05)}
+.roster tr:last-child td{border-bottom:none}
+.roster .role{font-weight:600;color:var(--white)}
+.roster .emoji{font-size:18px}
+
+/* ── WEEK TIMELINE ── */
+.timeline{display:flex;gap:0;width:100%;max-width:900px}
+.tl-week{flex:1;padding:20px;position:relative}
+.tl-week::after{content:'';position:absolute;right:0;top:20px;bottom:20px;width:1px;background:rgba(255,255,255,0.08)}
+.tl-week:last-child::after{display:none}
+.tl-label{font-family:var(--font-display);font-size:11px;letter-spacing:2px;margin-bottom:6px}
+.tl-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:4px}
+.tl-days{font-family:var(--font-mono);font-size:10px;color:var(--gray)}
+.tl-meeting{font-size:11px;color:var(--gold);margin-top:8px}
+
+/* ── CLIENT CARDS ── */
+.client-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:800px}
+.client-mini{background:var(--navy2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px;display:flex;gap:14px;align-items:flex-start}
+.client-mini .flag{font-size:28px;flex-shrink:0}
+.client-mini .name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px}
+.client-mini .loc{font-size:11px;color:var(--gray);font-family:var(--font-mono)}
+.client-mini.yours{border-color:rgba(0,201,177,0.4);background:rgba(0,201,177,0.06)}
+
+/* ── 5 QUESTIONS ── */
+.questions-list{display:flex;flex-direction:column;gap:10px;max-width:700px;width:100%}
+.q-item{
+  display:flex;gap:16px;align-items:flex-start;
+  padding:14px 18px;border-radius:8px;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+}
+.q-num{
+  font-family:var(--font-display);font-size:28px;
+  flex-shrink:0;line-height:1;
+}
+.q-content{}
+.q-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:4px}
+.q-body{font-size:12px;color:var(--gray);line-height:1.5}
+
+/* ── FORMAT SPLIT ── */
+.format-split{display:grid;grid-template-columns:1fr 1fr;gap:3px;max-width:900px;width:100%;border-radius:12px;overflow:hidden}
+.format-block{padding:28px 32px}
+.format-block.long{background:rgba(0,201,177,0.08)}
+.format-block.short{background:rgba(232,87,58,0.08)}
+.format-label{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.format-block.long .format-label{color:var(--teal)}
+.format-block.short .format-label{color:var(--coral)}
+.format-name{font-family:var(--font-display);font-size:32px;margin-bottom:16px;color:var(--white)}
+.format-detail{font-size:12px;color:var(--light);line-height:1.8}
+.format-detail p{margin-bottom:6px}
+.format-detail strong{display:block;font-size:10px;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;opacity:0.6}
+
+/* ── MOODBOARD EXPLAINER ── */
+.mb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:800px;width:100%}
+.mb-item{padding:16px 20px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)}
+.mb-item .icon{font-size:20px;margin-bottom:8px}
+.mb-item h4{font-size:12px;font-weight:600;color:var(--white);margin-bottom:4px}
+.mb-item p{font-size:11px;color:var(--gray);line-height:1.5}
+
+/* ── SENTENCE BUILDER ── */
+.sentence-builder{max-width:700px;width:100%}
+.sb-label{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.sb-template{
+  font-size:15px;line-height:1.9;color:var(--light);
+  padding:16px 20px;background:rgba(255,255,255,0.03);
+  border-radius:8px;border-left:3px solid var(--teal);
+  margin-bottom:12px;
+}
+.sb-blank{
+  display:inline-block;border-bottom:2px solid var(--teal);
+  min-width:140px;color:var(--teal);font-style:italic;
+  padding:0 4px;
+}
+.sb-template.coral{border-left-color:var(--coral)}
+.sb-template.coral .sb-blank{border-bottom-color:var(--coral);color:var(--coral)}
+
+/* ── WATCHING LIST ── */
+.watch-list{display:flex;flex-direction:column;gap:12px;max-width:700px;width:100%}
+.watch-item{display:flex;gap:16px;align-items:flex-start;padding:14px 18px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)}
+.watch-num{font-family:var(--font-display);font-size:32px;flex-shrink:0;line-height:1;color:var(--teal)}
+.watch-detail{}
+.watch-format{font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px}
+.watch-desc{font-size:12px;color:var(--gray);line-height:1.5}
+
+/* ── REFLECTION BOX ── */
+.reflection{max-width:700px;width:100%}
+.r-item{padding:18px 22px;border-radius:8px;background:rgba(240,165,0,0.06);border-left:3px solid var(--gold);margin-bottom:12px}
+.r-num{font-family:var(--font-display);font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:6px}
+.r-q{font-size:14px;color:var(--cream);line-height:1.6}
+
+/* ── GENZCARWASH BRIEF ── */
+.genz-brief{
+  background:linear-gradient(135deg,rgba(232,87,58,0.1),rgba(240,165,0,0.06));
+  border:1px solid rgba(232,87,58,0.3);border-radius:12px;
+  padding:28px 32px;max-width:800px;width:100%;
+}
+.genz-name{font-family:var(--font-display);font-size:48px;color:var(--white);line-height:1;margin-bottom:4px}
+.genz-loc{font-family:var(--font-mono);font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:20px}
+.genz-bullets{list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.genz-bullets li{font-size:13px;color:var(--light);padding:5px 0 5px 16px;position:relative}
+.genz-bullets li::before{content:'▸';position:absolute;left:0;color:var(--coral);font-size:10px;top:7px}
+.genz-ask{
+  margin-top:16px;padding:14px 16px;
+  background:rgba(240,165,0,0.08);border-radius:6px;
+  font-size:13px;color:var(--cream);line-height:1.6;
+  font-style:italic;
+}
+
+/* ── CLOSING SLIDE ── */
+.close-meta{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+.close-line{font-family:var(--font-mono);font-size:12px;color:var(--gray);letter-spacing:1px}
+.close-line strong{color:var(--teal)}
+
+/* ── SESSION DIVIDER SLIDE ── */
+.session-divider{
+  background:var(--navy2);
+  align-items:center;justify-content:center;text-align:center;
+}
+.session-number{font-family:var(--font-display);font-size:180px;color:rgba(255,255,255,0.04);line-height:1;position:absolute}
+.session-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.session-tag{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;padding:6px 18px;border-radius:20px}
+.session-name{font-family:var(--font-display);font-size:clamp(36px,5vw,64px);color:var(--white);text-align:center;line-height:1.1}
+.session-time{font-family:var(--font-mono);font-size:13px;color:var(--gray)}
+
+
+/* ── ALERT SYSTEM ── */
+.alert-card{display:flex;align-items:flex-start;gap:20px;padding:24px 28px;border-radius:12px;max-width:760px;width:100%;margin:10px 0}
+.alert-card.red{background:rgba(231,76,60,0.12);border:2px solid #E74C3C}
+.alert-card.gold{background:rgba(240,165,0,0.1);border:2px solid var(--gold)}
+.alert-card.pin{background:rgba(0,201,177,0.08);border:2px solid var(--teal)}
+.alert-icon{font-size:32px;flex-shrink:0;line-height:1}
+.alert-body{}
+.alert-label{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.alert-card.red .alert-label{color:#E74C3C}
+.alert-card.gold .alert-label{color:var(--gold)}
+.alert-card.pin .alert-label{color:var(--teal)}
+.alert-text{font-size:15px;line-height:1.6;color:var(--cream)}
+.alert-text strong{color:var(--white)}
+.alert-stack{display:flex;flex-direction:column;gap:10px;max-width:760px;width:100%}
+
+/* ── DAY 6 EXTRAS ── */
+.scene-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:1060px;width:100%}
+.scene-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px}
+.scene-num{font-family:var(--font-display);font-size:32px;color:var(--teal);opacity:0.3;line-height:1;margin-bottom:2px}
+.scene-title{font-size:12px;font-weight:700;color:var(--white);margin-bottom:4px}
+.scene-desc{font-size:11px;color:var(--gray);line-height:1.5}
+.suno-prompt{background:rgba(0,0,0,0.35);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;padding:8px 12px;font-family:var(--font-mono);font-size:10px;color:var(--gold);line-height:1.65;margin-top:8px}
+.suno-label{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:4px}
+.instrument-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.instrument-name{font-family:var(--font-display);font-size:20px;color:var(--white);line-height:1}
+.instrument-why{font-size:11px;color:var(--light);line-height:1.55;flex:1}
+.instrument-client{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--teal);text-transform:uppercase;margin-bottom:2px}
+.flavor-col{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px}
+.flavor-label{font-family:var(--font-display);font-size:24px;margin-bottom:10px}
+.panel-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;border-top:2px solid var(--panel-color,var(--teal))}
+.panel-type{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.panel-vo{font-size:12px;color:var(--white);font-weight:600;margin-bottom:4px}
+.panel-music{font-size:11px;color:var(--gray);line-height:1.4}
+.inst-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1000px;width:100%}
+.inst-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:900px;width:100%}
+.panel-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:1060px;width:100%}
+.panel-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1000px;width:100%}
+.tag-pill{display:inline-block;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- STANDBY -->
+<div class="slide bg-dark active" data-session="Standby">
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+    <div style="font-family:var(--font-display);font-size:clamp(60px,10vw,140px);color:rgba(255,255,255,0.05);letter-spacing:4px;line-height:1">WEEK TWO</div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,0.12);letter-spacing:4px;text-transform:uppercase">Day 6 · Score & Voice · Loading...</div>
+  </div>
+</div>
+
+<!-- WEEK 2 TITLE -->
+<div class="slide bg-navy" data-session="Session 0">
+  <div class="eyebrow">Week Two Begins</div>
+  <div class="slide-title">SCORE.<br>VOICE.<br><span class="teal">SOUND.</span></div>
+  <div class="body-text" style="margin-bottom:24px">Week 1 you built the visual world. This week you give it a voice, a score, and a heartbeat. By Friday your film will have sound.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span style="background:rgba(0,201,177,0.1);border:1px solid rgba(0,201,177,0.3);color:var(--teal);font-family:var(--font-mono);font-size:10px;padding:5px 14px;border-radius:20px;letter-spacing:1px">MON · Score & Voice</span>
+    <span style="background:rgba(0,201,177,0.1);border:1px solid rgba(0,201,177,0.3);color:var(--teal);font-family:var(--font-mono);font-size:10px;padding:5px 14px;border-radius:20px;letter-spacing:1px">TUE · Sound Design</span>
+    <span style="background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.3);color:var(--gold);font-family:var(--font-mono);font-size:10px;padding:5px 14px;border-radius:20px;letter-spacing:1px">WED · Client Meeting 2</span>
+    <span style="background:rgba(0,201,177,0.1);border:1px solid rgba(0,201,177,0.3);color:var(--teal);font-family:var(--font-mono);font-size:10px;padding:5px 14px;border-radius:20px;letter-spacing:1px">THU · Video Sprint</span>
+    <span style="background:rgba(0,201,177,0.1);border:1px solid rgba(0,201,177,0.3);color:var(--teal);font-family:var(--font-mono);font-size:10px;padding:5px 14px;border-radius:20px;letter-spacing:1px">FRI · Beat Machine + Rough Cut</span>
+  </div>
+</div>
+
+<!-- ENERGIZER DIVIDER -->
+<div class="slide session-divider bg-coral" data-session="Energizer">
+  <div class="eyebrow coral">Energizer · 9:00 AM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">NAME<br>THAT<br><span class="accent">GENRE.</span></div>
+</div>
+
+<!-- ENERGIZER RULES -->
+<div class="slide bg-coral" data-session="Energizer">
+  <div class="eyebrow coral">How it works</div>
+  <div class="slide-title" style="font-size:clamp(36px,4.5vw,60px);margin-bottom:20px">THE RULES.</div>
+  <div class="two-col" style="max-width:860px">
+    <div class="info-card coral-border">
+      <h3 class="coral">What you'll hear</h3>
+      <ul>
+        <li>10 clips — 30 seconds each, all Suno-generated</li>
+        <li>Each scored for a specific scene</li>
+        <li>Some Caribbean. Some conventional. Some both.</li>
+      </ul>
+    </div>
+    <div class="info-card coral-border">
+      <h3 class="coral">What you do</h3>
+      <ul>
+        <li>Match each clip to a scene from the pool</li>
+        <li>Write your answer — don't discuss yet</li>
+        <li>After all 10 — reveal, compare, debate</li>
+      </ul>
+    </div>
+  </div>
+  <div class="alert-card gold" style="margin-top:20px">
+    <div class="alert-icon">⭐</div>
+    <div class="alert-body">
+      <div class="alert-label">Gold Star</div>
+      <div class="alert-text"><strong>You're not guessing the genre.</strong> You're matching mood to moment. The gap between what you heard and what someone else heard — that's where the lesson lives.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE POOL -->
+<div class="slide bg-coral" data-session="Energizer">
+  <div class="eyebrow coral">The Scene Pool</div>
+  <div class="slide-title" style="font-size:clamp(26px,3.2vw,44px);margin-bottom:16px">MATCH THE MUSIC TO ONE OF <span class="accent">THESE.</span></div>
+  <div class="scene-grid">
+    <div class="scene-card"><div class="scene-num">01</div><div class="scene-title">Airport at dawn</div><div class="scene-desc">First light. A family reunion in the background.</div></div>
+    <div class="scene-card"><div class="scene-num">02</div><div class="scene-title">Tense boardroom</div><div class="scene-desc">Two executives. A document slides across the table.</div></div>
+    <div class="scene-card"><div class="scene-num">03</div><div class="scene-title">Caribbean street life</div><div class="scene-desc">Market vendors. Children. The ordinary pulse of the island.</div></div>
+    <div class="scene-card"><div class="scene-num">04</div><div class="scene-title">Fishing village sunrise</div><div class="scene-desc">A lone fisherman. Still water. Mist on the hills.</div></div>
+    <div class="scene-card"><div class="scene-num">05</div><div class="scene-title">First bank account</div><div class="scene-desc">Nervous. Signing. The teller smiles.</div></div>
+    <div class="scene-card"><div class="scene-num">06</div><div class="scene-title">Cargo ships at port</div><div class="scene-desc">Massive vessels. Cranes beginning to move.</div></div>
+    <div class="scene-card"><div class="scene-num">07</div><div class="scene-title">Government office 8am</div><div class="scene-desc">Lights on. Someone making coffee.</div></div>
+    <div class="scene-card"><div class="scene-num">08</div><div class="scene-title">Cybersecurity breach</div><div class="scene-desc">Screens flashing. Fingers flying across a keyboard.</div></div>
+    <div class="scene-card"><div class="scene-num">09</div><div class="scene-title">Business consultation</div><div class="scene-desc">Warm office. Trust being built across a desk.</div></div>
+    <div class="scene-card"><div class="scene-num">10</div><div class="scene-title">End of day waterfront</div><div class="scene-desc">The port quieting. The last ferry leaving.</div></div>
+  </div>
+</div>
+
+<!-- PLAY -->
+<div class="slide bg-dark" data-session="Energizer">
+  <div class="eyebrow coral">Play — Generate before the session</div>
+  <div class="slide-title" style="font-size:clamp(40px,5vw,72px);margin-bottom:20px">LISTEN.<br>WRITE.<br><span class="accent">DON'T TALK.</span></div>
+  <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px 22px;max-width:820px">
+    <div class="suno-label" style="margin-bottom:12px">Suno prompts — paste each one and generate</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--light)">
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">01</span> Cinematic orchestral, gentle piano, soft strings building slowly, warm hopeful, dawn light, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">02</span> Minimal corporate tension, sparse piano chords, low ambient drone, slow building unease, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">03</span> Banjo and ukulele duet, easy Caribbean folk rhythm, warm and communal, acoustic, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">04</span> Acoustic nylon guitar, gentle Caribbean folk, peaceful and solitary, soft breeze, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">05</span> Solo ukulele, minor key, warm and slightly vulnerable, intimate, coming of age feeling, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">06</span> Epic cinematic, deep brass choir, timpani punctuation, powerful and slow, maritime grandeur, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">07</span> Light jazz piano trio, walking bass, mildly upbeat, professional and unhurried, office morning, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">08</span> Dark electronic, synth pulses, glitchy digital textures, bass ostinato, urgent tech thriller, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">09</span> Classical guitar nylon string, warm and intimate, soft cello underneath, trust and warmth, no lyrics, 30s</div>
+      <div><span style="color:var(--teal);font-weight:700;font-family:var(--font-mono);min-width:24px;display:inline-block">10</span> Reflective strings, cor anglais solo melody, bittersweet and peaceful, Caribbean waterfront, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEBRIEF -->
+<div class="slide bg-coral" data-session="Energizer">
+  <div class="eyebrow coral">The Debrief</div>
+  <div class="big-quote coral" style="margin-bottom:24px">"Two people heard the same clip and saw completely different scenes. What does that tell you about your job when you score your own film?"</div>
+  <div class="body-text" style="margin-bottom:20px">Music doesn't describe a scene — it <strong>creates</strong> one. Your score is a creative decision, not a decoration.</div>
+  <div class="alert-card red">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-label">Red Alert</div>
+      <div class="alert-text"><strong>Your music must match your client's brand personality — not your personal taste.</strong> What you love and what your client needs are two completely different things.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION 1 DIVIDER -->
+<div class="slide session-divider bg-teal" data-session="Session 1">
+  <div class="eyebrow">Session 1 · 9:30 AM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">WHY<br>MUSIC<br><span class="teal">MATTERS.</span></div>
+</div>
+
+<!-- MUSIC IS A CREATIVE DECISION -->
+<div class="slide bg-teal" data-session="Session 1">
+  <div class="eyebrow">The principle</div>
+  <div class="slide-title" style="font-size:clamp(32px,4vw,56px);margin-bottom:20px">MUSIC IS A<br>CREATIVE<br><span class="teal">DECISION.</span></div>
+  <div class="two-col" style="max-width:900px">
+    <div>
+      <div class="body-text" style="margin-bottom:14px">The instrument you choose tells the audience what to feel <strong>before a single visual registers</strong>. The brain processes music faster than image. Your score arrives first.</div>
+      <div class="body-text" style="margin-bottom:14px">This means your music is not background. It is the emotional argument your film makes. Every instrument choice is a statement about your client's brand.</div>
+      <div class="body-text">A solo piano says something different than a full orchestra. A banjo says something different than a string quartet. Neither is better — both are <strong>specific</strong>. Specificity is the craft.</div>
+    </div>
+    <div class="info-card teal-border">
+      <h3 class="teal">Three questions before you score</h3>
+      <ul>
+        <li>What does this scene need the audience to <strong style="color:var(--white)">feel</strong>?</li>
+        <li>What does my client's brand <strong style="color:var(--white)">sound like</strong> in the world?</li>
+        <li>Is this music choice serving the <strong style="color:var(--white)">scene</strong> or my personal taste?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- WRONG MUSIC EXERCISE -->
+<div class="slide bg-teal" data-session="Session 1">
+  <div class="eyebrow">The Wrong Music Exercise</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:20px">WHAT WRONG<br>SOUNDS<br><span class="teal">LIKE.</span></div>
+  <div class="three-col" style="max-width:960px">
+    <div class="info-card teal-border">
+      <h3 class="teal">Round 1</h3>
+      <p>SCASPA's port at full operation scored with solo ukulele. Play it. What happens to the scene's authority and scale?</p>
+      <div class="suno-prompt">Solo ukulele, gentle and warm, minor key, intimate folk, no lyrics, 20s</div>
+    </div>
+    <div class="info-card teal-border">
+      <h3 class="teal">Round 2</h3>
+      <p>Someone filing their first tax return scored with full brass orchestra. What happens to the human scale of the moment?</p>
+      <div class="suno-prompt">Full brass orchestra, epic and grand, triumphant fanfare, powerful, no lyrics, 20s</div>
+    </div>
+    <div class="info-card teal-border">
+      <h3 class="teal">Round 3 ⭐</h3>
+      <p>A cybersecurity breach scene scored with banjo and ukulele duet. Is it wrong — or surprisingly interesting? Debate this one.</p>
+      <div class="suno-prompt">Banjo and ukulele duet, upbeat Caribbean folk, warm and playful, acoustic, no lyrics, 20s</div>
+    </div>
+  </div>
+  <div class="alert-card gold" style="margin-top:16px">
+    <div class="alert-icon">⭐</div>
+    <div class="alert-body">
+      <div class="alert-label">Gold Star</div>
+      <div class="alert-text"><strong>Round 3 is the interesting one.</strong> Sometimes the "wrong" choice creates something unexpected and memorable. The difference between a mistake and a creative decision is intention.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION 2 DIVIDER -->
+<div class="slide session-divider bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Session 2 · 10:15 AM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">INSTRUMENT<br><span class="gold">INTELLIGENCE.</span></div>
+</div>
+
+<!-- TRUST & CREDIBILITY -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Trust & Credibility</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">TRUST.</span></div>
+  <div class="inst-grid-4">
+    <div class="instrument-card">
+      <div class="instrument-name">Solo Piano</div>
+      <div class="instrument-client">ECCB — financial literacy opening</div>
+      <div class="instrument-why">The most intimate instrument. No orchestra — just clarity. Says "I am being honest with you."</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Solo piano, slow and sincere, warm minor key, intimate and honest, no production, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Nylon Guitar</div>
+      <div class="instrument-client">Outsource Dev — brand story</div>
+      <div class="instrument-why">Warmth without formality. More human than piano. The consultant across the desk — a person helping you, not a bank.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Classical nylon string guitar, warm and conversational, gentle picking pattern, human and approachable, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Solo Cello</div>
+      <div class="instrument-client">IRD Anguilla — civic empathy</div>
+      <div class="instrument-why">Closest to the human voice in frequency. When a brand needs to communicate genuine care — not corporate care — solo cello.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Solo cello, expressive and warm, slow melodic, deeply human, gentle vibrato, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Walking Bass</div>
+      <div class="instrument-client">Caribbean Union Bank — heritage</div>
+      <div class="instrument-why">Steady, reliable, sophisticated. A bank that's been there for decades. Not flashy. Always moving forward. Always there.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Jazz trio, walking bass foundation, light piano comping, professional and steady, sophisticated warmth, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTHORITY & SCALE -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Authority & Scale</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">AUTHORITY.</span></div>
+  <div class="inst-grid-4">
+    <div class="instrument-card">
+      <div class="instrument-name">French Horn</div>
+      <div class="instrument-client">SCASPA — national gateway</div>
+      <div class="instrument-why">Grandeur without aggression. Authority at a civilised level. Not a trumpet — which announces. The French horn says: this institution matters to the nation.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">French horn solo with orchestral strings, cinematic grandeur, majestic and noble, slow build, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Timpani</div>
+      <div class="instrument-client">SCASPA — logo settle</div>
+      <div class="instrument-why">Weight and gravitas as punctuation — not rhythm. A single timpani hit under a moment of consequence. When the logo lands.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Orchestral cinematic, single timpani punctuation on key moments, strings underneath, ceremonial weight, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Low Brass Choir</div>
+      <div class="instrument-client">IRD Grenada — what taxes build</div>
+      <div class="instrument-why">Trombones and tuba together create foundation. Deep roots. Infrastructure. History. Not a brand — a cornerstone of the society.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Low brass choir, trombones and tuba, deep and powerful, slow moving, foundational weight, civic grandeur, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Pipe Organ</div>
+      <div class="instrument-client">Heritage moments only</div>
+      <div class="instrument-why">Use with extreme care. The weight of centuries. Tips easily into funeral or cathedral. Only when you genuinely need something that has endured.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Pipe organ, slow and reverent, deep resonant chords, centuries of weight, no melody just harmony, no lyrics, 20s</div>
+    </div>
+  </div>
+</div>
+
+<!-- EMOTION & LONGING -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Emotion & Longing</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">FEELING.</span></div>
+  <div class="inst-grid-4">
+    <div class="instrument-card">
+      <div class="instrument-name">Oboe (solo)</div>
+      <div class="instrument-client">SCASPA staff — pride of work</div>
+      <div class="instrument-why">Nasal, slightly mournful quality — an ache without being sad. Honours people who work with pride. Says: what you do matters, and we see you.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Solo oboe, gentle and slightly mournful, slow melodic line, warm strings underneath, emotional without being sad, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Cor Anglais</div>
+      <div class="instrument-client">Waterfront — end of day scenes</div>
+      <div class="instrument-why">The oboe's larger cousin. More mournful, more searching. When a scene needs to ask a question rather than answer one. Unresolved but hopeful.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Cor anglais solo, searching and melancholic, slow and spacious, large reverb, twilight atmosphere, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Violin Choir (no vibrato)</div>
+      <div class="instrument-client">Archive and heritage sequences</div>
+      <div class="instrument-why">Straight-toned strings without vibrato — pure, almost sacred. Grief, reverence, aspiration. A nation's heritage. Something worth protecting.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">String quartet, no vibrato, pure and reverent tone, slow sustained chords, sacred and still, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Muted Trumpet (distant)</div>
+      <div class="instrument-client">SCASPA — historical archive</div>
+      <div class="instrument-why">At low volume in large reverb — sounds like memory. Something from long ago that still matters. Archive footage. The first flights. The first ships.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Muted trumpet, distant and nostalgic, large reverb, slow and melancholic, sounds like memory, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- TENSION & URGENCY -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Tension & Urgency</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">TENSION.</span></div>
+  <div class="inst-grid-2">
+    <div class="instrument-card">
+      <div class="instrument-name">Violin — high register, tremolo</div>
+      <div class="instrument-client">Aspire / CUB — system under threat</div>
+      <div class="instrument-why">Rapid bowing on highest strings creates physiological tension. The body responds before the mind processes it. One of the oldest film scoring techniques for a reason.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Solo violin high register tremolo, rapid bow, tension building, uncomfortable and urgent, no resolution, no lyrics, 20s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Plucked Electric Bass — single pulse</div>
+      <div class="instrument-client">Network and data security scenes</div>
+      <div class="instrument-why">A single bass note pulsing — each pulse is a heartbeat, each pulse is a data packet. Relentless, inevitable, quiet danger. No melody. Just inevitability.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Plucked electric bass single note pulse, slow heartbeat rhythm, dark and minimal, digital threat atmosphere, no melody, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Low Cello Ostinato</div>
+      <div class="instrument-client">IRD Grenada — deadline approaching</div>
+      <div class="instrument-why">A repeated short pattern in low register. Builds dread slowly — not a jump scare but accumulation. A tax deadline approaching. A problem about to surface.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Low cello ostinato, repeated two-note pattern, slow dread building, dark and ominous, no resolution, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Silence with single stabs</div>
+      <div class="instrument-client">Any high-stakes moment</div>
+      <div class="instrument-why">The most underused technique. Complete silence punctuated by a single low orchestral hit. Silence is an instrument. The pause before something important.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Orchestral, mostly silence, single low brass stab every 8 seconds, dramatic and sparse, tension through space, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- HUMOR -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Humor</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">FUNNY.</span></div>
+  <div class="inst-grid-4">
+    <div class="instrument-card">
+      <div class="instrument-name">Tuba</div>
+      <div class="instrument-client">IRD — ignoring tax deadline</div>
+      <div class="instrument-why">The low, slightly flatulent quality undercuts gravity instantly. A pompous character in slow motion — tuba makes it comedy. Trumpet makes it heroic. Same scene. Different truth.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Solo tuba playing a pompous melody, deliberately slow and heavy, comic and self-important, slightly absurd, no lyrics, 20s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Pizzicato Strings</div>
+      <div class="instrument-client">Civic messaging — light touch</div>
+      <div class="instrument-why">Strings plucked rather than bowed. Bouncy, tiptoeing, whimsical. Someone doing something they shouldn't. A character who thinks they're getting away with something. They're not.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Pizzicato string orchestra, bouncy and playful, staccato and light, tiptoeing energy, whimsical and sneaky, no lyrics, 20s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Xylophone & Marimba</div>
+      <div class="instrument-client">ECCB — financial literacy for youth</div>
+      <div class="instrument-why">Bright, bouncy, childlike. Immediately lightens any scene. Xylophone = playfulness bordering on silly. Marimba = slightly more sophisticated — playful but not childish.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Xylophone and marimba duet, bright and bouncy, upbeat and cheerful, playful energy, light percussion, no lyrics, 20s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Muted Trumpet — wah wah</div>
+      <div class="instrument-client">Any relatable human error moment</div>
+      <div class="instrument-why">The iconic sound of failure and comic deflation. Someone made a mistake. The decision didn't work out. Self-aware humour, not mockery. There's a difference.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Muted trumpet wah wah, comic deflation, slow and defeated, jazz influenced, sad trombone energy, no lyrics, 15s</div>
+    </div>
+  </div>
+</div>
+
+<!-- TECHNOLOGY & INNOVATION -->
+<div class="slide bg-gold" data-session="Session 2">
+  <div class="eyebrow gold">Emotional function — Technology & Innovation</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">THE SOUND OF <span class="gold">MODERN.</span></div>
+  <div class="inst-grid-4">
+    <div class="instrument-card">
+      <div class="instrument-name">Synth Pads</div>
+      <div class="instrument-client">CUB — digital banking</div>
+      <div class="instrument-why">Sustained, evolving, atmospheric. Not a lead sound — a pad sits underneath and creates space and modernity. You are inside something much larger than you can see.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Synthesiser pad, slowly evolving, atmospheric and spacious, modern and vast, digital horizon, no melody, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Prepared Piano</div>
+      <div class="instrument-client">Aspire — reimagining finance</div>
+      <div class="instrument-why">Objects placed on strings create metallic, unusual tones. Something familiar being reimagined. Heritage meeting innovation — the collision between old and new.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Prepared piano, metallic and percussive tones, unusual and distinctive, modern experimental, familiar yet strange, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Strings + Electronics</div>
+      <div class="instrument-client">ECCB — digital credit platform</div>
+      <div class="instrument-why">Acoustic strings processed through digital effects. The warmth of the past, the precision of the future. Trustworthy and innovative simultaneously.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">String quartet with electronic processing, acoustic meets digital, warm yet modern, heritage and innovation combined, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name">Moog Synthesiser</div>
+      <div class="instrument-client">IRD Anguilla — digital services</div>
+      <div class="instrument-why">Analogue synth — retro-futurism. Technology that feels advanced AND warm. Not cold digital. The Moog has humanity. For services that don't want to feel robotic.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Moog synthesiser lead melody, analogue warmth, retro-futuristic, confident and human, not cold or robotic, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION 3 DIVIDER -->
+<div class="slide session-divider bg-coral" data-session="Session 3">
+  <div class="eyebrow coral">Session 3 · 11:30 AM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">CARIBBEAN<br><span class="accent">FLAVOUR.</span></div>
+</div>
+
+<!-- BANJO & UKULELE -->
+<div class="slide bg-coral" data-session="Session 3">
+  <div class="eyebrow coral">The Caribbean Folk Pair</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">BANJO &<br><span class="accent">UKULELE.</span></div>
+  <div class="two-col" style="max-width:940px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="info-card coral-border">
+        <h3 class="coral">The Banjo — Caribbean roots</h3>
+        <ul>
+          <li>Percussive twang. Rhythmic attack. The backbone of calypso before brass.</li>
+          <li>Lord Kitchener, Sparrow — banjo was the community voice instrument.</li>
+          <li>Carries folk heritage and social commentary DNA.</li>
+          <li>When you hear banjo: something is being said <em>about</em> the people, not <em>to</em> them.</li>
+        </ul>
+        <div class="suno-prompt">Caribbean banjo, rhythmic and percussive, folk calypso influence, community voice, acoustic warmth, no lyrics, 30s</div>
+      </div>
+      <div class="info-card coral-border">
+        <h3 class="coral">Banjo + Ukulele Together</h3>
+        <ul>
+          <li>Banjo drives rhythm — ukulele carries melody</li>
+          <li>Together: genuinely Caribbean without being folkloric or tourist-facing</li>
+          <li>Modern Caribbean identity your generation can claim</li>
+        </ul>
+        <div class="suno-prompt">Banjo and ukulele duet, banjo rhythmic foundation, ukulele melody, warm Caribbean folk, modern and authentic, no lyrics, 30s</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="info-card coral-border">
+        <h3 class="coral">The Ukulele — emotional precision</h3>
+        <ul>
+          <li>Re-entrant tuning — bright even in minor keys</li>
+          <li>Sadness on ukulele hasn't given up yet — very specific register</li>
+          <li><strong style="color:var(--white)">Solo slow</strong> — vulnerability without self-pity · <strong style="color:var(--white)">With drums</strong> — community moving · <strong style="color:var(--white)">With bass note</strong> — warmth AND credibility · <strong style="color:var(--white)">Minor key</strong> — haunting and intimate</li>
+        </ul>
+        <div class="suno-prompt">Solo ukulele, minor key, slow and intimate, warm vulnerability, slightly melancholic but hopeful, no lyrics, 30s</div>
+      </div>
+      <div class="info-card coral-border">
+        <h3 class="coral">Ukulele + Steel Pan</h3>
+        <ul>
+          <li>Both bright, both slightly metallic — a natural Caribbean pairing</li>
+          <li>Regional without being folkloric — modern without trying to be anywhere else</li>
+        </ul>
+        <div class="suno-prompt">Ukulele melody with steel pan harmony, bright Caribbean sound, modern and warm, forward looking island pride, no lyrics, 30s</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEEL PAN THREE WAYS -->
+<div class="slide bg-coral" data-session="Session 3">
+  <div class="eyebrow coral">Not one instrument — three distinct sounds</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">STEEL PAN<br><span class="accent">THREE WAYS.</span></div>
+  <div class="three-col" style="max-width:980px">
+    <div class="instrument-card">
+      <div class="instrument-name" style="color:var(--teal)">01 — Melody-Forward</div>
+      <div class="instrument-client" style="color:var(--teal)">SCASPA — passenger arrival</div>
+      <div class="instrument-why">Steel pan carrying the main melody over a light rhythm section. Celebratory. Warm. Inviting. The Caribbean that welcomes you. Tourist-facing content. The arrival experience.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Melody-forward steel pan, light Caribbean rhythm section, warm and welcoming, celebratory but not loud, tropical sunshine, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name" style="color:var(--gold)">02 — Harmonic Texture</div>
+      <div class="instrument-client" style="color:var(--gold)">Outsource Dev — corporate</div>
+      <div class="instrument-why">Steel pan as harmonic layer under a jazz arrangement — not the melody, the colour. Sophisticated Caribbean identity. Not festive. Cultured. A boardroom in Basseterre.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Steel pan as harmonic texture, jazz piano trio, walking bass, sophisticated and warm, professional Caribbean, not festive, no lyrics, 30s</div>
+    </div>
+    <div class="instrument-card">
+      <div class="instrument-name" style="color:var(--coral)">03 — Electronic Production</div>
+      <div class="instrument-client" style="color:var(--coral)">ECCB youth · Genzcarwash</div>
+      <div class="instrument-why">Steel pan with electronic beats. Modern Caribbean identity — the sound the next generation claims as theirs. Island pride, forward-looking, distinctly ours.</div>
+      <div class="suno-label">Try in Suno</div>
+      <div class="suno-prompt">Steel pan with electronic beats, modern Caribbean fusion, Gen Z energy, confident and forward-looking, island pride, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- SOCA IS NOT JUST CARNIVAL -->
+<div class="slide bg-coral" data-session="Session 3">
+  <div class="eyebrow coral">The most misunderstood point</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,46px);margin-bottom:14px">SOCA IS NOT<br>JUST <span class="accent">CARNIVAL.</span></div>
+  <div class="two-col" style="max-width:940px;gap:20px">
+    <div>
+      <div class="body-text" style="margin-bottom:12px;font-size:13px">The <strong>rhythm pattern</strong> of soca — the kick on one and three, the specific hi-hat pattern — creates energy and forward momentum that works across contexts when stripped of the full production.</div>
+      <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px 16px;margin-bottom:12px">
+        <div class="suno-label" style="margin-bottom:8px">The three soca registers</div>
+        <div style="font-size:12px;color:var(--light);line-height:1.9">
+          <span style="color:var(--coral);font-weight:700">Full soca</span> — brass stabs, call and response — carnival context only<br>
+          <span style="color:var(--gold);font-weight:700">Soca rhythm + orchestral</span> — Caribbean corporate. Proud and professional.<br>
+          <span style="color:var(--teal);font-weight:700">Soca pattern + ambient pads</span> — modern, sophisticated, identifiably ours
+        </div>
+      </div>
+      <div class="info-card coral-border">
+        <h3 class="coral">Also consider</h3>
+        <ul>
+          <li><strong style="color:var(--white)">Calypso guitar (syncopated)</strong> — social commentary instrument. Makes people think about things they resist. IRD's civic messaging.</li>
+          <li><strong style="color:var(--white)">Reggae one-drop (kick on 3)</strong> — space is the point. Reliable, inevitable, unhurried. Permanence without urgency.</li>
+          <li><strong style="color:var(--white)">Chutney influences</strong> — Caribbean music identity is plural. Acknowledging that is itself a creative statement.</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <div class="suno-label">Full soca — carnival only</div>
+        <div class="suno-prompt">Full soca production, brass stabs, call and response, energetic carnival rhythm, steel pan and horns, celebratory, no lyrics, 20s</div>
+      </div>
+      <div>
+        <div class="suno-label">Soca rhythm + orchestral — Caribbean corporate</div>
+        <div class="suno-prompt">Soca-influenced rhythm bed, orchestral strings over top, Caribbean corporate feel, proud and professional, energetic but refined, no lyrics, 30s</div>
+      </div>
+      <div>
+        <div class="suno-label">Soca pattern + pads — modern sophisticated</div>
+        <div class="suno-prompt">Soca drum pattern, ambient synthesiser pads, modern Caribbean sound, sophisticated and forward-looking, identifiably Caribbean, no lyrics, 30s</div>
+      </div>
+      <div>
+        <div class="suno-label">Calypso guitar — civic social commentary</div>
+        <div class="suno-prompt">Syncopated acoustic calypso guitar, folk tradition, warm and knowing, community voice, slightly playful social commentary feel, no lyrics, 30s</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TWO FLAVOURS EXERCISE -->
+<div class="slide bg-coral" data-session="Session 3">
+  <div class="eyebrow coral">The Exercise</div>
+  <div class="slide-title" style="font-size:clamp(32px,4vw,56px);margin-bottom:20px">TWO<br><span class="accent">FLAVOURS.</span></div>
+  <div class="two-col" style="max-width:900px">
+    <div class="flavor-col">
+      <div class="flavor-label" style="color:var(--teal)">🌴 Caribbean Version</div>
+      <div class="body-text" style="font-size:13px;margin-bottom:12px">Score your opening scene using Caribbean instrumentation. Choose the register that fits your client's brand positioning — celebratory, sophisticated, modern, or folk.</div>
+      <div class="suno-prompt">Brief Claude: "Write a Suno prompt using Caribbean instruments for [client]'s opening scene. Register: [choose one — celebratory / sophisticated / modern / folk]"</div>
+    </div>
+    <div class="flavor-col">
+      <div class="flavor-label" style="color:var(--gold)">🎼 Conventional Version</div>
+      <div class="body-text" style="font-size:13px;margin-bottom:12px">Score the same scene using conventional film scoring. Choose the instrument based on its emotional function — trust, authority, tension, or emotion.</div>
+      <div class="suno-prompt">Brief Claude: "Write a Suno prompt using conventional film scoring for [client]'s opening scene. Emotional function needed: [choose one — trust / authority / tension / emotion]"</div>
+    </div>
+  </div>
+  <div style="margin-top:14px;padding:12px 18px;background:rgba(255,255,255,0.04);border-radius:10px;max-width:900px">
+    <div class="suno-label" style="margin-bottom:6px">After generating both — ask your team</div>
+    <div style="font-size:13px;color:var(--light);line-height:1.7">Which version better serves your client's audience? Which would your client choose? Which is more powerful? Are those the same answer?</div>
+  </div>
+</div>
+
+<!-- SESSION 4 DIVIDER -->
+<div class="slide session-divider bg-purple" data-session="Session 4">
+  <div class="eyebrow purple">Session 4 · 1:00 PM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">STORYBOARD<br>TO<br><span style="color:var(--purple)">AUDIO.</span></div>
+</div>
+
+<!-- VO LENGTH DICTATES MUSIC -->
+<div class="slide bg-purple" data-session="Session 4">
+  <div class="eyebrow purple">The discipline</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:20px">VO LENGTH<br>DICTATES<br><span style="color:var(--purple)">MUSIC.</span></div>
+  <div class="two-col" style="max-width:900px">
+    <div>
+      <div class="body-text" style="margin-bottom:14px">Your voiceover length determines everything about how the music is structured. Music and voice are not independent — they breathe together. When the voice speaks, music steps back. When the voice stops, music reclaims the space.</div>
+      <div class="body-text">This is not a technical rule. It is a conversation between two storytelling instruments. <strong>Your job is to conduct that conversation.</strong></div>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--purple)">
+      <h3 style="color:var(--purple)">The rule of relationship</h3>
+      <ul>
+        <li>When VO speaks — music drops 20–30% volume</li>
+        <li>When VO pauses — music breathes back up</li>
+        <li>When VO ends — music rises to close</li>
+        <li>VO under 10s — music carries full melody before and after</li>
+        <li>VO 10–20s — music must be textural. Melody competes with voice.</li>
+        <li>VO over 20s — music almost disappears. Rhythm and atmosphere only.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL BY PANEL TIMING -->
+<div class="slide bg-purple" data-session="Session 4">
+  <div class="eyebrow purple">Go back to your Milanote board</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">PANEL BY PANEL<br><span style="color:var(--purple)">TIMING.</span></div>
+  <div class="panel-grid-5">
+    <div class="panel-card" style="--panel-color:var(--teal)">
+      <div class="panel-type" style="color:var(--teal)">Establishing — Wide</div>
+      <div class="panel-vo">0 seconds VO</div>
+      <div class="panel-music">Music only. Let the image speak. Atmosphere — not melody.</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--gold)">
+      <div class="panel-type" style="color:var(--gold)">Service / Product</div>
+      <div class="panel-vo">8–12 seconds VO</div>
+      <div class="panel-music">One clear message. Music becomes textural — rhythm and pad only.</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--coral)">
+      <div class="panel-type" style="color:var(--coral)">Human / Character</div>
+      <div class="panel-vo">5–8 seconds VO</div>
+      <div class="panel-music">Emotion needs space. Solo instrument underneath. Intimate.</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--purple)">
+      <div class="panel-type" style="color:var(--purple)">Data / Infographic</div>
+      <div class="panel-vo">12–18 seconds VO</div>
+      <div class="panel-music">Complexity needs time. Music almost disappears — low pad only.</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--green)">
+      <div class="panel-type" style="color:var(--green)">Closing Shot</div>
+      <div class="panel-vo">0–5 seconds</div>
+      <div class="panel-music">Tagline or nothing. Music swells. Brand name lands. Out.</div>
+    </div>
+  </div>
+  <div class="body-text" style="margin-top:16px;font-size:13px">Open your Milanote board now. For each panel — write the VO timing in seconds. Then you know exactly how long each Suno track needs to be, and where it breathes.</div>
+  <div class="alert-card red" style="margin-top:12px">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-label">Red Alert</div>
+      <div class="alert-text"><strong>Write the VO timing before you go to Suno.</strong> If you don't know how long the narration is, you cannot write a correct music prompt. Duration is not optional.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOUR INSTRUMENTS SAME SCENE -->
+<div class="slide bg-purple" data-session="Session 4">
+  <div class="eyebrow purple">The core exercise</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">FOUR INSTRUMENTS.<br><span style="color:var(--purple)">ONE SCENE.</span></div>
+  <div class="body-text" style="margin-bottom:16px;max-width:700px;font-size:13px">Take your opening storyboard panel. Generate it four times in Suno — same scene, four different instrument choices. Listen to all four. The scene hasn't changed. What changed?</div>
+  <div class="panel-grid-4">
+    <div class="panel-card" style="--panel-color:var(--teal)">
+      <div class="panel-type" style="color:var(--teal)">Version 1</div>
+      <div class="panel-vo">Solo Piano Only</div>
+      <div class="panel-music">What does intimacy and honesty do to this scene?</div>
+      <div class="suno-prompt">Solo piano, [your scene mood], intimate and sincere, no production, no lyrics, 30s</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--coral)">
+      <div class="panel-type" style="color:var(--coral)">Version 2</div>
+      <div class="panel-vo">Banjo + Ukulele</div>
+      <div class="panel-music">What does Caribbean folk identity do to this scene?</div>
+      <div class="suno-prompt">Banjo and ukulele duet, [your scene mood], Caribbean folk, acoustic warmth, no lyrics, 30s</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--gold)">
+      <div class="panel-type" style="color:var(--gold)">Version 3</div>
+      <div class="panel-vo">Strings + French Horn</div>
+      <div class="panel-music">What does grandeur and scale do to this scene?</div>
+      <div class="suno-prompt">French horn with orchestral strings, [your scene mood], cinematic grandeur, no lyrics, 30s</div>
+    </div>
+    <div class="panel-card" style="--panel-color:var(--purple)">
+      <div class="panel-type" style="color:var(--purple)">Version 4</div>
+      <div class="panel-vo">Synth + Soca Pattern</div>
+      <div class="panel-music">What does modern Caribbean innovation do to this scene?</div>
+      <div class="suno-prompt">Synthesiser pads with soca drum pattern, [your scene mood], modern Caribbean, no lyrics, 30s</div>
+    </div>
+  </div>
+  <div class="alert-card gold" style="margin-top:12px">
+    <div class="alert-icon">⭐</div>
+    <div class="alert-body">
+      <div class="alert-label">Gold Star</div>
+      <div class="alert-text"><strong>One of these four will feel obviously right. Understanding why the other three fail is what makes you a film scorer — not just a Suno user.</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION 5 DIVIDER -->
+<div class="slide session-divider bg-teal" data-session="Session 5">
+  <div class="eyebrow">Session 5 · 2:30 PM</div>
+  <div class="slide-title" style="font-size:clamp(48px,6vw,88px)">SUNO<br><span class="teal">GENERATION.</span></div>
+</div>
+
+<!-- THINK PROMPT GENERATE -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">The workflow</div>
+  <div class="slide-title" style="font-size:clamp(36px,4.5vw,64px);margin-bottom:20px">THINK.<br>PROMPT.<br><span class="teal">GENERATE.</span></div>
+  <div class="two-col" style="max-width:900px">
+    <div class="info-card teal-border">
+      <h3 class="teal">Brief Claude first — every time</h3>
+      <ul>
+        <li>Client name and brand personality</li>
+        <li>The specific scene — what is happening visually</li>
+        <li>The emotional function needed</li>
+        <li>Specific instrument and why</li>
+        <li>Caribbean or conventional — or both</li>
+        <li>VO duration — so music length is correct</li>
+      </ul>
+    </div>
+    <div class="info-card teal-border">
+      <h3 class="teal">What Claude gives you</h3>
+      <ul>
+        <li>A Suno prompt with correct instrument vocabulary</li>
+        <li>Genre and sub-genre descriptors</li>
+        <li>Energy and tempo direction</li>
+        <li>Cultural reference if Caribbean register requested</li>
+        <li>Duration matched to your VO timing</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SUNO PROMPT FORMULA -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">The formula</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">THE SUNO<br>PROMPT<br><span class="teal">FORMULA.</span></div>
+  <div style="background:rgba(0,0,0,0.35);border-radius:12px;padding:20px 24px;max-width:860px;width:100%">
+    <div class="suno-label" style="margin-bottom:14px">Five components — always include all five</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span class="tag-pill" style="background:var(--teal);color:var(--navy)">MOOD</span>
+        <span style="font-size:13px;color:var(--light);padding-top:4px">The emotional register — cinematic, tense, warm, joyful, mournful, urgent, whimsical</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span class="tag-pill" style="background:var(--gold);color:var(--navy)">INSTRUMENT</span>
+        <span style="font-size:13px;color:var(--light);padding-top:4px">Specific instruments — not "strings" but "solo cello". Not "Caribbean" but "steel pan as harmonic texture under jazz piano trio"</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span class="tag-pill" style="background:var(--coral);color:var(--white)">ENERGY</span>
+        <span style="font-size:13px;color:var(--light);padding-top:4px">Tempo and movement — slow building, steady pulse, fast cut, gentle forward momentum, driving urgency</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span class="tag-pill" style="background:var(--purple);color:var(--white)">VOCALS</span>
+        <span style="font-size:13px;color:var(--light);padding-top:4px">Almost always: no lyrics. Be explicit. If vocals are intentional, specify the style.</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span class="tag-pill" style="background:var(--green);color:var(--navy)">DURATION</span>
+        <span style="font-size:13px;color:var(--light);padding-top:4px">Always specify — 15s, 30s, 60s. Match to your VO timing from the storyboard.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- HUM IT UPLOAD IT -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">Your melody. Suno's production.</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">HUM IT.<br>UPLOAD IT.<br><span class="teal">BUILD IT.</span></div>
+  <div class="two-col" style="max-width:960px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="info-card teal-border">
+        <h3 class="teal">What this does</h3>
+        <p style="font-size:13px;color:var(--light);line-height:1.6;margin-bottom:10px">You don't have to describe your music in words. If you have a melody in your head — hum it, record it, upload it. Suno builds a full production around your melodic idea while preserving your contour, rhythm, and feel.</p>
+        <p style="font-size:13px;color:var(--light);line-height:1.6">This is the bridge between your musical intuition and AI production. You bring the idea. Suno brings the band.</p>
+      </div>
+      <div class="info-card teal-border">
+        <h3 class="teal">What works as a seed</h3>
+        <ul>
+          <li>A hummed melody — even just "bum bum bum bum"</li>
+          <li>A rhythm tapped on a desk and recorded</li>
+          <li>You singing the hook a cappella</li>
+          <li>A chord on a guitar, piano, or ukulele</li>
+          <li>Any short audio clip — 5 to 10 seconds is ideal</li>
+        </ul>
+      </div>
+      <div class="info-card teal-border">
+        <h3 class="teal">What to avoid</h3>
+        <ul>
+          <li>Clips longer than 30 seconds — Suno drifts from the seed</li>
+          <li>Very noisy recordings — background noise confuses the model</li>
+          <li>Uploading someone else's music — Suno's terms prohibit this</li>
+          <li>Leaving the style prompt blank — always tell Suno what to build</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="info-card teal-border">
+        <h3 class="teal">Step by step</h3>
+        <ul>
+          <li><strong style="color:var(--white)">Step 1</strong> — Open your phone voice memo app</li>
+          <li><strong style="color:var(--white)">Step 2</strong> — Hum your melody. 5-10 seconds. Short and clear.</li>
+          <li><strong style="color:var(--white)">Step 3</strong> — Open Suno. Click Create. Find the audio upload icon.</li>
+          <li><strong style="color:var(--white)">Step 4</strong> — Upload your voice memo</li>
+          <li><strong style="color:var(--white)">Step 5</strong> — Add a style prompt — tell Suno what to build around your melody</li>
+          <li><strong style="color:var(--white)">Step 6</strong> — Generate. Two variations. Listen to both.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="suno-label" style="margin-bottom:6px">Style prompt — Caribbean instrumental</div>
+        <div class="suno-prompt">Caribbean folk, banjo and ukulele, warm and acoustic, build around the uploaded melody, no lyrics, 30s</div>
+        <div class="suno-label" style="margin-top:10px;margin-bottom:6px">Style prompt — Caribbean with vocals</div>
+        <div class="suno-prompt">Soca-influenced, upbeat and confident, Caribbean, build around the uploaded melody, male vocal, 30s</div>
+        <div class="suno-label" style="margin-top:10px;margin-bottom:6px">Style prompt — cinematic orchestral</div>
+        <div class="suno-prompt">Cinematic orchestral, strings and French horn, build around the uploaded melody, grand and sweeping, no lyrics, 30s</div>
+      </div>
+      <div class="alert-card gold">
+        <div class="alert-icon">⭐</div>
+        <div class="alert-body">
+          <div class="alert-label">Gold Star</div>
+          <div class="alert-text"><strong>Your melody + Suno's production = something nobody else has.</strong> Every other team is writing text prompts. If you hum your client's theme — that melodic idea is yours. That's original creative authorship on top of AI production.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HUM IT EXERCISE -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">Your Turn — Hum It</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">WHAT MELODY<br>IS IN YOUR<br><span class="teal">HEAD?</span></div>
+  <div class="task-card" style="max-width:820px">
+    <h2 style="color:var(--white);font-size:20px;margin-bottom:12px">⏱ 20 MINUTES · VOICE MEMO + SUNO</h2>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Think about your client's brand. What melody comes to mind? Don't overthink — just hum what you feel.</li>
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Record it in your phone voice memo. 5 to 10 seconds. One clean take.</li>
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Upload to Suno. Add a style prompt — Caribbean or conventional, your choice.</li>
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Listen to both variations. Does Suno honour your melody? Which production fits your client?</li>
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Generate the same melody with a different style prompt. Compare all versions.</li>
+      <li style="color:var(--cream);font-size:13px;padding:7px 12px 7px 26px;background:rgba(255,255,255,0.03);border-radius:6px">Save the strongest version to your team folder. Note: "this melody was ours."</li>
+    </ul>
+  </div>
+  <div style="margin-top:12px;padding:14px 18px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;max-width:820px">
+    <div class="suno-label" style="margin-bottom:8px">If nothing comes to mind — try this instead</div>
+    <div style="font-size:13px;color:var(--light);line-height:1.7">Tap a rhythm on your desk that matches the energy of your client's brand. Record it. Upload it. Tell Suno the style. A rhythm is just as valid a seed as a melody.</div>
+  </div>
+  <div class="alert-card red" style="margin-top:12px">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-label">Red Alert</div>
+      <div class="alert-text"><strong>Available on Pro plan only — not the free tier.</strong> Students on free accounts use text prompts for this exercise. The instructor demos the hum upload live so everyone sees what it produces.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LYRICS & JINGLES -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">When Suno Sings</div>
+  <div class="slide-title" style="font-size:clamp(30px,3.8vw,52px);margin-bottom:16px">LYRICS &<br><span class="teal">JINGLES.</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1000px;width:100%">
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="info-card teal-border">
+        <h3 class="teal">Instrumental vs Lyrical — know the difference</h3>
+        <ul>
+          <li><strong style="color:var(--white)">Instrumental score</strong> — music under visuals. Supports the image. Never competes. No words.</li>
+          <li><strong style="color:var(--white)">Lyrical underscoring</strong> — a full song playing under visuals. Lyrics comment thematically — not about the brand directly.</li>
+          <li><strong style="color:var(--white)">Jingle</strong> — short, melodic, branded. Has the client's name or tagline baked in. Designed to repeat and stick.</li>
+          <li><strong style="color:var(--white)">Spoken word / rap</strong> — powerful for youth-facing content. Claude writes the bars, Suno delivers them.</li>
+        </ul>
+      </div>
+      <div class="info-card teal-border">
+        <h3 class="teal">Which clients suit jingles</h3>
+        <ul>
+          <li><strong style="color:var(--white)">ECCB</strong> — financial literacy jingle for young people. Learn your credit score through a hook.</li>
+          <li><strong style="color:var(--white)">IRD Grenada / IRD Anguilla</strong> — calypso jingle. Sparrow and Kitchener made social commentary through song for exactly this reason.</li>
+          <li><strong style="color:var(--white)">Genzcarwash</strong> — Gen Z brand jingle. Soca or hip-hop influenced. Plays in the tunnel. Sticks in your head.</li>
+          <li><strong style="color:var(--white)">SCASPA</strong> — a maritime anthem with a chorus. Gateway to the world energy.</li>
+          <li><strong style="color:var(--white)">Outsource Dev</strong> — a short brand theme. "Making business better" — memorable and human.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="info-card teal-border">
+        <h3 class="teal">The workflow — Claude writes, Suno sings</h3>
+        <ul>
+          <li>Claude writes the lyrics first — always</li>
+          <li>Brief Claude with: client name, key message, hook keywords, audience, style, duration</li>
+          <li>Claude returns full lyrics with verse, chorus, and bridge if needed</li>
+          <li>Paste lyrics into Suno's custom lyrics field — not the style prompt</li>
+          <li>Add style descriptors separately: genre, tempo, voice type, instrumentation</li>
+          <li>Generate. Iterate. The hook should be singable after one listen.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="suno-label" style="margin-bottom:6px">Claude brief for a jingle — Genzcarwash</div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--cream);font-style:italic;line-height:1.7;margin-bottom:10px">"Write a 20-second jingle for Genzcarwash — a premium Gen Z car wash and lounge in St. Kitts. The hook must include the brand name. Style: Caribbean hip-hop, upbeat, confident. Audience: young Kittitians 18–30. The jingle plays in the wash tunnel."</div>
+        <div class="suno-label" style="margin-bottom:6px">Suno — style prompt (lyrics go in the lyrics field)</div>
+        <div class="suno-prompt">Caribbean hip-hop, upbeat and confident, young male vocal, punchy and rhythmic, electric bass and steel pan, premium Gen Z energy, 20s</div>
+        <div class="suno-label" style="margin-top:10px;margin-bottom:6px">IRD calypso jingle — Claude brief</div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--cream);font-style:italic;line-height:1.7;margin-bottom:10px">"Write a 30-second calypso jingle for the Inland Revenue Division of Grenada. The hook should make tax filing feel like a civic celebration, not a burden. Include the key message: 'file on time, build Grenada.' Calypso tradition — Kitchener-inspired wit and community pride."</div>
+        <div class="suno-prompt">Calypso style, acoustic guitar and steel pan, call and response vocal, upbeat and witty, community celebration energy, Kitchener tradition, 30s</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="alert-card gold" style="margin-top:14px">
+    <div class="alert-icon">⭐</div>
+    <div class="alert-body">
+      <div class="alert-label">Gold Star</div>
+      <div class="alert-text"><strong>A jingle is a brand asset your client can use beyond the film.</strong> If your team creates a jingle your client loves — that's something that could live on radio, social media, and in their physical space. That's professional-level creative output.</div>
+    </div>
+  </div>
+</div>
+
+<!-- WATCH ME SCORE GENZCARWASH -->
+<div class="slide bg-dark" data-session="Session 5">
+  <div class="eyebrow">Watch the demo</div>
+  <div class="slide-title" style="font-size:clamp(32px,4vw,56px);margin-bottom:16px">WATCH ME SCORE<br><span style="color:var(--teal)">GENZCARWASH.</span></div>
+  <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px 22px;max-width:760px">
+    <div class="suno-label" style="margin-bottom:10px">Claude brief — say this out loud</div>
+    <div style="font-size:13px;color:var(--cream);font-style:italic;line-height:1.7;margin-bottom:14px">"Write a Suno prompt for the Genzcarwash opening scene — 30 seconds, music only. Scene: black SUV arriving at golden hour, electric blue LED lighting. Brand: premium, Gen Z, Caribbean. I want the Caribbean register — modern not folkloric."</div>
+    <div class="suno-label" style="margin-bottom:6px">Caribbean version — Claude returns this</div>
+    <div class="suno-prompt">Modern Caribbean hip-hop instrumental, steel pan with electronic beats, deep confident bass, smooth electric piano accents, Gen Z premium energy, golden hour warmth, slow building arrival, no lyrics, 30s</div>
+    <div class="suno-label" style="margin-top:12px;margin-bottom:6px">Conventional version — for comparison</div>
+    <div class="suno-prompt">Cinematic hip-hop instrumental, smooth synthesiser pads, confident bass pulse, premium automotive feel, golden hour atmosphere, slow building, no lyrics, 30s</div>
+  </div>
+  <div class="body-text" style="margin-top:14px;font-size:13px">Generate both live. Play both. Ask the room: which version feels more like St. Kitts? Which one could you have heard anywhere in the world?</div>
+</div>
+
+<!-- CARIBBEAN VS CONVENTIONAL DEMO -->
+<div class="slide bg-dark" data-session="Session 5">
+  <div class="eyebrow">The comparison — all six clients</div>
+  <div class="slide-title" style="font-size:clamp(28px,3.5vw,48px);margin-bottom:16px">CARIBBEAN<br>VS<br><span style="color:var(--teal)">CONVENTIONAL.</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:1000px;width:100%">
+    <div>
+      <div class="suno-label" style="color:var(--teal);margin-bottom:4px">🌴 Caribbean — ECCB credit literacy</div>
+      <div class="suno-prompt">Steel pan with electronic production, modern Caribbean, ECCB brand warm and trustworthy, young adult audience, no lyrics, 30s</div>
+    </div>
+    <div>
+      <div class="suno-label" style="color:var(--gold);margin-bottom:4px">🎼 Conventional — ECCB credit literacy</div>
+      <div class="suno-prompt">Solo piano, warm and sincere, public education tone, honest and clear, intimate, no lyrics, 30s</div>
+    </div>
+    <div>
+      <div class="suno-label" style="color:var(--teal);margin-bottom:4px">🌴 Caribbean — SCASPA port arrival</div>
+      <div class="suno-prompt">Steel pan melody-forward, light Caribbean rhythm, welcoming and celebratory, arrival energy, no lyrics, 30s</div>
+    </div>
+    <div>
+      <div class="suno-label" style="color:var(--gold);margin-bottom:4px">🎼 Conventional — SCASPA port arrival</div>
+      <div class="suno-prompt">French horn with orchestral strings, cinematic grandeur, majestic and national, slow build, no lyrics, 30s</div>
+    </div>
+    <div>
+      <div class="suno-label" style="color:var(--teal);margin-bottom:4px">🌴 Caribbean — IRD Grenada civic</div>
+      <div class="suno-prompt">Calypso guitar syncopated, folk social commentary, warm and knowing, community voice, playful but purposeful, no lyrics, 30s</div>
+    </div>
+    <div>
+      <div class="suno-label" style="color:var(--gold);margin-bottom:4px">🎼 Conventional — IRD Grenada civic</div>
+      <div class="suno-prompt">Low brass choir, civic grandeur, foundational weight, what taxes build, no lyrics, 30s</div>
+    </div>
+  </div>
+</div>
+
+<!-- YOUR TURN -->
+<div class="slide bg-teal" data-session="Session 5">
+  <div class="eyebrow">Your Turn</div>
+  <div class="slide-title" style="font-size:clamp(32px,4vw,56px);margin-bottom:16px">SCORE YOUR<br>STORYBOARD.<br><span class="teal">PANEL BY PANEL.</span></div>
+  <div class="task-card" style="max-width:820px">
+    <h2 style="color:var(--white);font-size:20px;margin-bottom:12px">⏱ 60 MINUTES · CLOSE OTHER TABS</h2>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:7px">
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">Open Milanote. Write the VO timing in seconds for each panel.</li>
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">For each panel — name the emotional function. Choose your instrument from today's session.</li>
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">Brief Claude with all five Suno formula components. Get the prompt.</li>
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">Generate Caribbean AND conventional versions. Compare both.</li>
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">Choose the stronger version. Note why. Save to team folder.</li>
+      <li style="color:var(--cream);font-size:13px;padding:6px 10px 6px 24px;background:rgba(255,255,255,0.03);border-radius:6px">Repeat for every panel. Every panel needs a music decision.</li>
+    </ul>
+  </div>
+  <div class="alert-card red" style="margin-top:14px">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-label">Red Alert</div>
+      <div class="alert-text"><strong>Claude first. Every panel. Every time.</strong> Skipping Claude and going straight to Suno makes generic music. Your client deserves better than generic.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOR TONIGHT -->
+<div class="slide bg-navy2" data-session="Session 5">
+  <div class="eyebrow">Before tomorrow</div>
+  <div class="slide-title" style="font-size:clamp(36px,4.5vw,64px);margin-bottom:20px">FOR TONIGHT.</div>
+  <div class="two-col" style="max-width:860px">
+    <div class="info-card teal-border">
+      <h3 class="teal">Must do</h3>
+      <ul>
+        <li>All storyboard panels have VO timing written</li>
+        <li>All panels have an instrument decision noted</li>
+        <li>Opening score generated — Caribbean AND conventional</li>
+        <li>Both versions saved to team folder</li>
+        <li>Team has chosen which version to carry forward and can say why</li>
+      </ul>
+    </div>
+    <div class="info-card gold-border">
+      <h3 class="gold">If you have time</h3>
+      <ul>
+        <li>Score a second panel — the closing scene</li>
+        <li>Try the wrong music exercise on your own opening</li>
+        <li>Write your VO for the opening panel and time it naturally</li>
+        <li>Add music decisions to your Canva portfolio</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- DAY CLOSE -->
+<div class="slide bg-dark" data-session="Close">
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px">
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:16px">Day 6 Complete</div>
+    <div style="font-family:var(--font-display);font-size:clamp(48px,7vw,100px);color:var(--white);line-height:0.9;margin-bottom:24px">YOUR FILM<br>HAS A<br><span style="color:var(--teal)">SCORE.</span></div>
+    <div style="font-size:15px;color:var(--gray);max-width:520px;line-height:1.7">Come back tomorrow with every storyboard panel scored. Day 7 — Sound Design. The full audio landscape of your film gets built.</div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="prevSlide()">← Prev</button>
+  <span class="slide-counter" id="counter">1 / 37</span>
+  <button class="ctrl-btn" onclick="nextSlide()">Next →</button>
+  <button class="ctrl-btn" onclick="toggleNav()" title="Slide Map (G)">⊞ Go To</button>
+</div>
+<div class="session-indicator" id="session-indicator"></div>
+<div class="progress-bar" id="progress"></div>
+
+<div id="nav-overlay" style="
+  display:none;position:fixed;inset:0;background:rgba(6,14,28,0.96);
+  z-index:500;overflow-y:auto;padding:40px 48px;
+">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:6px">Slide Navigator</div>
+      <div style="font-family:var(--font-display);font-size:36px;color:var(--white)">GO TO SLIDE</div>
+    </div>
+    <button onclick="toggleNav()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--cream);font-family:var(--font-mono);font-size:12px;padding:10px 20px;border-radius:6px;cursor:pointer">✕ Close (Esc)</button>
+  </div>
+  <div id="nav-grid" style="display:flex;flex-direction:column;gap:24px"></div>
+</div>
+
+<style>
+.nav-session-group{}
+.nav-session-label{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.nav-slides-row{display:flex;flex-wrap:wrap;gap:8px}
+.nav-slide-btn{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;padding:10px 14px;
+  cursor:pointer;transition:all 0.15s;
+  text-align:left;min-width:180px;max-width:240px;
+  flex:1;
+}
+.nav-slide-btn:hover{background:rgba(0,201,177,0.12);border-color:rgba(0,201,177,0.4)}
+.nav-slide-btn.current-slide{border-color:var(--teal);background:rgba(0,201,177,0.1)}
+.nav-slide-num{font-family:var(--font-display);font-size:20px;line-height:1;margin-bottom:4px}
+.nav-slide-label{font-size:11px;color:var(--light);line-height:1.4}
+
+/* ── ALERT SYSTEM ── */
+.alert-card{display:flex;align-items:flex-start;gap:20px;padding:24px 28px;border-radius:12px;max-width:760px;width:100%;margin:10px 0}
+.alert-card.red{background:rgba(231,76,60,0.12);border:2px solid #E74C3C}
+.alert-card.gold{background:rgba(240,165,0,0.1);border:2px solid var(--gold)}
+.alert-card.pin{background:rgba(0,201,177,0.08);border:2px solid var(--teal)}
+.alert-icon{font-size:32px;flex-shrink:0;line-height:1}
+.alert-body{}
+.alert-label{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.alert-card.red .alert-label{color:#E74C3C}
+.alert-card.gold .alert-label{color:var(--gold)}
+.alert-card.pin .alert-label{color:var(--teal)}
+.alert-text{font-size:15px;line-height:1.6;color:var(--cream)}
+.alert-text strong{color:var(--white)}
+.alert-stack{display:flex;flex-direction:column;gap:10px;max-width:760px;width:100%}
+</style>
+
+<script>
+
+const slides=document.querySelectorAll('.slide');
+let current=0;
+const total=slides.length;
+
+// Slide labels for navigator
+const slideLabels=[
+  '— Day 6 · Score & Voice —',
+  'Week 2 Starts Now',
+  '— Energizer: Name That Genre —',
+  'The Rules',
+  'The Scene Pool',
+  'Play',
+  'The Debrief',
+  '— Session 1: Why Music Matters —',
+  'Music Is a Creative Decision',
+  'The Wrong Music Exercise',
+  '— Session 2: Instrument Intelligence —',
+  'Trust & Credibility',
+  'Authority & Scale',
+  'Emotion & Longing',
+  'Tension & Urgency',
+  'Humor — Yes Really',
+  'Technology & Innovation',
+  '— Session 3: Caribbean Flavour —',
+  'Banjo & Ukulele',
+  'Steel Pan — Three Ways',
+  'Soca Is Not Just Carnival',
+  'Two Flavours Exercise',
+  '— Session 4: Storyboard to Audio —',
+  'VO Length Dictates Music',
+  'Panel by Panel Timing',
+  'Four Instruments Same Scene',
+  '— Session 5: Suno Generation —',
+  'Think. Prompt. Generate.',
+  'The Suno Prompt Formula',
+  'Hum It. Upload It. Build It.',
+  'Your Turn — Hum It',
+  'Lyrics & Jingles — When Suno Sings',
+  'Watch Me Score — Genzcarwash',
+  'Caribbean vs Conventional Demo',
+  'Your Turn — Score Your Storyboard',
+  'For Tonight',
+  'Day 6 Complete'
+];
+
+function showSlide(n){
+  slides[current].classList.remove('active');
+  current=Math.max(0,Math.min(n,total-1));
+  slides[current].classList.add('active');
+  document.getElementById('counter').textContent=`${current+1} / ${total}`;
+  const _si=document.getElementById('session-indicator');if(_si)_si.textContent=slides[current].dataset.session||'';
+  document.getElementById('progress').style.width=`${((current+1)/total)*100}%`;
+  // Update current highlight in navigator
+  document.querySelectorAll('.nav-slide-btn').forEach((b,i)=>{
+    b.classList.toggle('current-slide',i===current);
+  });
+}
+
+function nextSlide(){showSlide(current+1)}
+function prevSlide(){showSlide(current-1)}
+
+function toggleNav(){
+  const overlay=document.getElementById('nav-overlay');
+  const open=overlay.style.display==='none'||overlay.style.display==='';
+  overlay.style.display=open?'block':'none';
+  if(open) buildNav();
+}
+
+function buildNav(){
+  const grid=document.getElementById('nav-grid');
+  grid.innerHTML='';
+
+  // Group slides by session
+  const sessions={};
+  slides.forEach((s,i)=>{
+    const sess=s.dataset.session||'Other';
+    if(!sessions[sess])sessions[sess]=[];
+    sessions[sess].push(i);
+  });
+
+  // Session colour map
+  const sessColors={
+    'Standby':'var(--gray)','Opening':'var(--teal)',
+    'Session 2':'var(--teal)','Session 3':'var(--gold)',
+    'Session 4':'var(--purple)','Session 5':'var(--coral)',
+    'Session 6':'var(--teal)','Session 7':'var(--gold)',
+    'Session 8':'var(--purple)','Lunch':'var(--gray)','Close':'var(--teal)',
+  };
+
+  Object.entries(sessions).forEach(([sess,indices])=>{
+    const group=document.createElement('div');
+    group.className='nav-session-group';
+
+    const label=document.createElement('div');
+    label.className='nav-session-label';
+    label.style.color=sessColors[sess]||'var(--gray)';
+    label.textContent=sess;
+    group.appendChild(label);
+
+    const row=document.createElement('div');
+    row.className='nav-slides-row';
+
+    indices.forEach(i=>{
+      const btn=document.createElement('button');
+      btn.className='nav-slide-btn'+(i===current?' current-slide':'');
+      btn.innerHTML=`<div class="nav-slide-num" style="color:${sessColors[sess]||'var(--gray)'}">${i+1}</div><div class="nav-slide-label">${slideLabels[i]||'Slide '+(i+1)}</div>`;
+      btn.onclick=()=>{showSlide(i);toggleNav()};
+      row.appendChild(btn);
+    });
+
+    group.appendChild(row);
+    grid.appendChild(group);
+  });
+}
+
+document.addEventListener('keydown',e=>{
+  const overlay=document.getElementById('nav-overlay');
+  const navOpen=overlay.style.display==='block';
+  if(e.key==='Escape'&&navOpen){toggleNav();return}
+  if(e.key==='g'||e.key==='G'){toggleNav();return}
+  if(navOpen)return; // don't navigate slides when nav is open
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')nextSlide();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevSlide();
+});
+
+// Touch swipe
+let touchX=0;
+document.addEventListener('touchstart',e=>touchX=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{
+  const diff=touchX-e.changedTouches[0].clientX;
+  if(Math.abs(diff)>50){diff>0?nextSlide():prevSlide();}
+});
+
+showSlide(0);
+
+
+// Fix session-indicator null-safe
+</script>
+</body>
+</html>
